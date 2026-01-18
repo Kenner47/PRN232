@@ -16,17 +16,25 @@ namespace FUNewsManagementSystem.API.Controllers
             _categoryService = categoryService;
         }
 
-        // GET: api/Categories
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Category>>> GetCategories()
+        public async Task<ActionResult<IEnumerable<object>>> GetCategories()
         {
             var categories = await _categoryService.GetAllCategoriesAsync();
-            return Ok(categories);
+
+            var result = categories.Select(c => new
+            {
+                c.CategoryId,
+                c.CategoryName,
+                c.CategoryDescription,
+                c.ParentCategoryId,
+                c.IsActive
+            });
+
+            return Ok(result);
         }
 
-        // GET: api/Categories/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Category>> GetCategory(int id)
+        public async Task<ActionResult<object>> GetCategory(int id)
         {
             var category = await _categoryService.GetCategoryByIdAsync(id);
 
@@ -35,40 +43,18 @@ namespace FUNewsManagementSystem.API.Controllers
                 return NotFound(new { message = $"Category with ID {id} not found." });
             }
 
-            return Ok(category);
-        }
-
-        // GET: api/Categories/5/children
-        [HttpGet("{id}/children")]
-        public async Task<ActionResult<Category>> GetCategoryWithChildren(int id)
-        {
-            var category = await _categoryService.GetCategoryWithChildrenAsync(id);
-
-            if (category == null)
+            var result = new
             {
-                return NotFound(new { message = $"Category with ID {id} not found." });
-            }
+                category.CategoryId,
+                category.CategoryName,
+                category.CategoryDescription,
+                category.ParentCategoryId,
+                category.IsActive
+            };
 
-            return Ok(category);
+            return Ok(result);
         }
 
-        // GET: api/Categories/active
-        [HttpGet("active")]
-        public async Task<ActionResult<IEnumerable<Category>>> GetActiveCategories()
-        {
-            var categories = await _categoryService.GetActiveCategoriesAsync();
-            return Ok(categories);
-        }
-
-        // GET: api/Categories/parent/5
-        [HttpGet("parent/{parentId?}")]
-        public async Task<ActionResult<IEnumerable<Category>>> GetCategoriesByParent(int? parentId)
-        {
-            var categories = await _categoryService.GetCategoriesByParentIdAsync(parentId);
-            return Ok(categories);
-        }
-
-        // POST: api/Categories
         [HttpPost]
         public async Task<ActionResult<Category>> CreateCategory(Category category)
         {
@@ -82,7 +68,6 @@ namespace FUNewsManagementSystem.API.Controllers
             return CreatedAtAction(nameof(GetCategory), new { id = category.CategoryId }, category);
         }
 
-        // PUT: api/Categories/5
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateCategory(int id, Category category)
         {
@@ -101,7 +86,6 @@ namespace FUNewsManagementSystem.API.Controllers
             return NoContent();
         }
 
-        // DELETE: api/Categories/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCategory(int id)
         {
@@ -113,6 +97,27 @@ namespace FUNewsManagementSystem.API.Controllers
             }
 
             return NoContent();
+        }
+
+        [HttpGet("search")]
+        public async Task<ActionResult<IEnumerable<object>>> SearchCategories([FromQuery] string? name)
+        {
+            var categories = await _categoryService.GetAllCategoriesAsync();
+            if (!string.IsNullOrEmpty(name))
+            {
+                categories = categories.Where(c => c.CategoryName != null &&
+                    c.CategoryName.Contains(name, StringComparison.OrdinalIgnoreCase)).ToList();
+            }
+
+            var result = categories.Select(c => new
+            {
+                c.CategoryId,
+                c.CategoryName,
+                c.CategoryDescription,
+                c.ParentCategoryId,
+                c.IsActive
+            });
+            return Ok(result);
         }
     }
 }

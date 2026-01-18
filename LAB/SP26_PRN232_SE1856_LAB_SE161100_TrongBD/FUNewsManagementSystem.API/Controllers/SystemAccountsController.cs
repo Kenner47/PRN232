@@ -16,7 +16,6 @@ namespace FUNewsManagementSystem.API.Controllers
             _systemAccountService = systemAccountService;
         }
 
-        // GET: api/SystemAccounts
         [HttpGet]
         public async Task<ActionResult<IEnumerable<SystemAccount>>> GetSystemAccounts()
         {
@@ -24,7 +23,6 @@ namespace FUNewsManagementSystem.API.Controllers
             return Ok(accounts);
         }
 
-        // GET: api/SystemAccounts/5
         [HttpGet("{id}")]
         public async Task<ActionResult<SystemAccount>> GetSystemAccount(int id)
         {
@@ -38,43 +36,6 @@ namespace FUNewsManagementSystem.API.Controllers
             return Ok(account);
         }
 
-        // GET: api/SystemAccounts/email/test@example.com
-        [HttpGet("email/{email}")]
-        public async Task<ActionResult<SystemAccount>> GetAccountByEmail(string email)
-        {
-            var account = await _systemAccountService.GetByEmailAsync(email);
-
-            if (account == null)
-            {
-                return NotFound(new { message = $"Account with email {email} not found." });
-            }
-
-            return Ok(account);
-        }
-
-        // GET: api/SystemAccounts/role/1
-        [HttpGet("role/{role}")]
-        public async Task<ActionResult<IEnumerable<SystemAccount>>> GetAccountsByRole(int role)
-        {
-            var accounts = await _systemAccountService.GetAccountsByRoleAsync(role);
-            return Ok(accounts);
-        }
-
-        // POST: api/SystemAccounts/login
-        [HttpPost("login")]
-        public async Task<ActionResult<SystemAccount>> Login([FromBody] LoginRequest request)
-        {
-            var account = await _systemAccountService.LoginAsync(request.Email, request.Password);
-
-            if (account == null)
-            {
-                return Unauthorized(new { message = "Invalid email or password." });
-            }
-
-            return Ok(account);
-        }
-
-        // POST: api/SystemAccounts
         [HttpPost]
         public async Task<ActionResult<SystemAccount>> CreateSystemAccount(SystemAccount account)
         {
@@ -88,7 +49,6 @@ namespace FUNewsManagementSystem.API.Controllers
             return CreatedAtAction(nameof(GetSystemAccount), new { id = account.AccountId }, account);
         }
 
-        // PUT: api/SystemAccounts/5
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateSystemAccount(int id, SystemAccount account)
         {
@@ -107,7 +67,6 @@ namespace FUNewsManagementSystem.API.Controllers
             return NoContent();
         }
 
-        // DELETE: api/SystemAccounts/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteSystemAccount(int id)
         {
@@ -120,12 +79,33 @@ namespace FUNewsManagementSystem.API.Controllers
 
             return NoContent();
         }
-    }
 
-    // DTO for login request
-    public class LoginRequest
-    {
-        public string Email { get; set; }
-        public string Password { get; set; }
+        [HttpGet("search")]
+        public async Task<ActionResult<IEnumerable<SystemAccount>>> SearchAccounts(
+            [FromQuery] string? email,
+            [FromQuery] string? name,
+            [FromQuery] int? role)
+        {
+            var accounts = await _systemAccountService.GetAllAccountsAsync();
+
+            if (!string.IsNullOrEmpty(email))
+            {
+                accounts = accounts.Where(a => a.AccountEmail != null &&
+                    a.AccountEmail.Contains(email, StringComparison.OrdinalIgnoreCase)).ToList();
+            }
+
+            if (!string.IsNullOrEmpty(name))
+            {
+                accounts = accounts.Where(a => a.AccountName != null &&
+                    a.AccountName.Contains(name, StringComparison.OrdinalIgnoreCase)).ToList();
+            }
+
+            if (role.HasValue)
+            {
+                accounts = accounts.Where(a => a.AccountRole == role.Value).ToList();
+            }
+
+            return Ok(accounts);
+        }
     }
 }

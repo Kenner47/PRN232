@@ -16,7 +16,6 @@ namespace FUNewsManagementSystem.API.Controllers
             _tagService = tagService;
         }
 
-        // GET: api/Tags
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Tag>>> GetTags()
         {
@@ -24,7 +23,6 @@ namespace FUNewsManagementSystem.API.Controllers
             return Ok(tags);
         }
 
-        // GET: api/Tags/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Tag>> GetTag(int id)
         {
@@ -38,29 +36,6 @@ namespace FUNewsManagementSystem.API.Controllers
             return Ok(tag);
         }
 
-        // GET: api/Tags/name/technology
-        [HttpGet("name/{tagName}")]
-        public async Task<ActionResult<Tag>> GetTagByName(string tagName)
-        {
-            var tag = await _tagService.GetTagByNameAsync(tagName);
-
-            if (tag == null)
-            {
-                return NotFound(new { message = $"Tag with name '{tagName}' not found." });
-            }
-
-            return Ok(tag);
-        }
-
-        // GET: api/Tags/newsarticle/5
-        [HttpGet("newsarticle/{newsArticleId}")]
-        public async Task<ActionResult<IEnumerable<Tag>>> GetTagsByNewsArticle(int newsArticleId)
-        {
-            var tags = await _tagService.GetTagsByNewsArticleIdAsync(newsArticleId);
-            return Ok(tags);
-        }
-
-        // POST: api/Tags
         [HttpPost]
         public async Task<ActionResult<Tag>> CreateTag(Tag tag)
         {
@@ -74,7 +49,6 @@ namespace FUNewsManagementSystem.API.Controllers
             return CreatedAtAction(nameof(GetTag), new { id = tag.TagId }, tag);
         }
 
-        // PUT: api/Tags/5
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateTag(int id, Tag tag)
         {
@@ -93,7 +67,6 @@ namespace FUNewsManagementSystem.API.Controllers
             return NoContent();
         }
 
-        // DELETE: api/Tags/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTag(int id)
         {
@@ -105,6 +78,25 @@ namespace FUNewsManagementSystem.API.Controllers
             }
 
             return NoContent();
+        }
+
+        [HttpGet("search")]
+        public async Task<ActionResult<IEnumerable<Tag>>> SearchTags(
+            [FromQuery] string? keyword = null)
+        {
+            if (string.IsNullOrEmpty(keyword))
+            {
+                var allTags = await _tagService.GetAllTagsAsync();
+                return Ok(allTags);
+            }
+
+            var tags = await _tagService.GetAllTagsAsync();
+            var filteredTags = tags.Where(t =>
+                (t.TagName != null && t.TagName.Contains(keyword, StringComparison.OrdinalIgnoreCase)) ||
+                (t.Note != null && t.Note.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+            ).ToList();
+
+            return Ok(filteredTags);
         }
     }
 }
