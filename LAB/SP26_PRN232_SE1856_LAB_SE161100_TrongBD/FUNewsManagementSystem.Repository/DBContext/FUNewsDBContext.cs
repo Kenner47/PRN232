@@ -8,6 +8,10 @@ namespace FUNewsManagementSystem.Repository.Models;
 
 public partial class FUNewsDBContext : DbContext
 {
+    public FUNewsDBContext()
+    {
+    }
+
     public FUNewsDBContext(DbContextOptions<FUNewsDBContext> options)
         : base(options)
     {
